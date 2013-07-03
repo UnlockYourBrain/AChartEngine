@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.achartengine.chart;
 
 import java.io.Serializable;
+import java.text.NumberFormat;
 import java.util.List;
 
 import org.achartengine.model.Point;
@@ -104,41 +105,44 @@ public abstract class AbstractChart implements Serializable {
       paint.setTextSize(renderer.getLegendTextSize());
       int sLength = Math.min(titles.length, renderer.getSeriesRendererCount());
       for (int i = 0; i < sLength; i++) {
+        SimpleSeriesRenderer r = renderer.getSeriesRendererAt(i);
         final float lineSize = getLegendShapeWidth(i);
-        String text = titles[i];
-        if (titles.length == renderer.getSeriesRendererCount()) {
-          paint.setColor(renderer.getSeriesRendererAt(i).getColor());
-        } else {
-          paint.setColor(Color.LTGRAY);
-        }
-        float[] widths = new float[text.length()];
-        paint.getTextWidths(text, widths);
-        float sum = 0;
-        for (float value : widths) {
-          sum += value;
-        }
-        float extraSize = lineSize + 10 + sum;
-        float currentWidth = currentX + extraSize;
-
-        if (i > 0 && getExceed(currentWidth, renderer, right, width)) {
-          currentX = left;
-          currentY += renderer.getLegendTextSize();
-          size += renderer.getLegendTextSize();
-          currentWidth = currentX + extraSize;
-        }
-        if (getExceed(currentWidth, renderer, right, width)) {
-          float maxWidth = right - currentX - lineSize - 10;
-          if (isVertical(renderer)) {
-            maxWidth = width - currentX - lineSize - 10;
+        if (r.isShowLegendItem()) {
+          String text = titles[i];
+          if (titles.length == renderer.getSeriesRendererCount()) {
+            paint.setColor(r.getColor());
+          } else {
+            paint.setColor(Color.LTGRAY);
           }
-          int nr = paint.breakText(text, true, maxWidth, widths);
-          text = text.substring(0, nr) + "...";
+          float[] widths = new float[text.length()];
+          paint.getTextWidths(text, widths);
+          float sum = 0;
+          for (float value : widths) {
+            sum += value;
+          }
+          float extraSize = lineSize + 10 + sum;
+          float currentWidth = currentX + extraSize;
+
+          if (i > 0 && getExceed(currentWidth, renderer, right, width)) {
+            currentX = left;
+            currentY += renderer.getLegendTextSize();
+            size += renderer.getLegendTextSize();
+            currentWidth = currentX + extraSize;
+          }
+          if (getExceed(currentWidth, renderer, right, width)) {
+            float maxWidth = right - currentX - lineSize - 10;
+            if (isVertical(renderer)) {
+              maxWidth = width - currentX - lineSize - 10;
+            }
+            int nr = paint.breakText(text, true, maxWidth, widths);
+            text = text.substring(0, nr) + "...";
+          }
+          if (!calculate) {
+            drawLegendShape(canvas, r, currentX, currentY, i, paint);
+            drawString(canvas, text, currentX + lineSize + 5, currentY + 5, paint);
+          }
+          currentX += extraSize;
         }
-        if (!calculate) {
-          drawLegendShape(canvas, renderer.getSeriesRendererAt(i), currentX, currentY, i, paint);
-          drawString(canvas, text, currentX + lineSize + 5, currentY + 5, paint);
-        }
-        currentX += extraSize;
       }
     }
     return Math.round(size + renderer.getLegendTextSize());
@@ -197,12 +201,16 @@ public abstract class AbstractChart implements Serializable {
   /**
    * Makes sure the fraction digit is not displayed, if not needed.
    * 
+   * 
+   * @param format the number format for the label
    * @param label the input label value
    * @return the label without the useless fraction digit
    */
-  protected String getLabel(double label) {
+  protected String getLabel(NumberFormat format, double label) {
     String text = "";
-    if (label == Math.round(label)) {
+    if (format != null) {
+      text = format.format(label);
+    } else if (label == Math.round(label)) {
       text = Math.round(label) + "";
     } else {
       text = label + "";
@@ -290,6 +298,47 @@ public abstract class AbstractChart implements Serializable {
    * @param paint the paint to be used for painting
    * @param circular if the path ends with the start point
    */
+  protected void drawPath(Canvas canvas, List<Float> points, Paint paint, boolean circular) {
+    Path path = new Path();
+    int height = canvas.getHeight();
+    int width = canvas.getWidth();
+
+    float[] tempDrawPoints;
+    if (points.size() < 4) {
+      return;
+    }
+    tempDrawPoints = calculateDrawPoints(points.get(0), points.get(1), points.get(2),
+        points.get(3), height, width);
+    path.moveTo(tempDrawPoints[0], tempDrawPoints[1]);
+    path.lineTo(tempDrawPoints[2], tempDrawPoints[3]);
+
+    int length = points.size();
+    for (int i = 4; i < length; i += 2) {
+      if ((points.get(i - 1) < 0 && points.get(i + 1) < 0)
+          || (points.get(i - 1) > height && points.get(i + 1) > height)) {
+        continue;
+      }
+      tempDrawPoints = calculateDrawPoints(points.get(i - 2), points.get(i - 1), points.get(i),
+          points.get(i + 1), height, width);
+      if (!circular) {
+        path.moveTo(tempDrawPoints[0], tempDrawPoints[1]);
+      }
+      path.lineTo(tempDrawPoints[2], tempDrawPoints[3]);
+    }
+    if (circular) {
+      path.lineTo(points.get(0), points.get(1));
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  /**
+   * The graphical representation of a path.
+   * 
+   * @param canvas the canvas to paint to
+   * @param points the points that are contained in the path to paint
+   * @param paint the paint to be used for painting
+   * @param circular if the path ends with the start point
+   */
   protected void drawPath(Canvas canvas, float[] points, Paint paint, boolean circular) {
     Path path = new Path();
     int height = canvas.getHeight();
@@ -303,7 +352,8 @@ public abstract class AbstractChart implements Serializable {
     path.moveTo(tempDrawPoints[0], tempDrawPoints[1]);
     path.lineTo(tempDrawPoints[2], tempDrawPoints[3]);
 
-    for (int i = 4; i < points.length; i += 2) {
+    int length = points.length;
+    for (int i = 4; i < length; i += 2) {
       if ((points[i - 1] < 0 && points[i + 1] < 0)
           || (points[i - 1] > height && points[i + 1] > height)) {
         continue;
@@ -401,11 +451,13 @@ public abstract class AbstractChart implements Serializable {
    * @param color the label color
    * @param paint the paint
    * @param line if a line to the label should be drawn
+   * @param display display the label anyway
    */
   protected void drawLabel(Canvas canvas, String labelText, DefaultRenderer renderer,
       List<RectF> prevLabelsBounds, int centerX, int centerY, float shortRadius, float longRadius,
-      float currentAngle, float angle, int left, int right, int color, Paint paint, boolean line) {
-    if (renderer.isShowLabels()) {
+      float currentAngle, float angle, int left, int right, int color, Paint paint, boolean line,
+      boolean display) {
+    if (renderer.isShowLabels() || display) {
       paint.setColor(color);
       double rAngle = Math.toRadians(90 - (currentAngle + angle / 2));
       double sinValue = Math.sin(rAngle);

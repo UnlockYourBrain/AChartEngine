@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009, 2010 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,14 +94,14 @@ public class MultipleTemperatureChart extends AbstractDemoChart {
     renderer.setYTitle("Hours", 1);
     renderer.setYAxisAlign(Align.RIGHT, 1);
     renderer.setYLabelsAlign(Align.LEFT, 1);
-
-    renderer.addYTextLabel(20, "Test", 0);
-    renderer.addYTextLabel(10, "New Test", 1);
+    renderer.setGridColor(colors[0], 0);
+    renderer.setGridColor(colors[1], 1);
 
     XYMultipleSeriesDataset dataset = buildDataset(titles, x, values);
     values.clear();
     values.add(new double[] { 4.3, 4.9, 5.9, 8.8, 10.8, 11.9, 13.6, 12.8, 11.4, 9.5, 7.5, 5.5 });
     addXYSeries(dataset, new String[] { "Sunshine hours" }, x, values, 1);
+
     Intent intent = ChartFactory.getCubicLineChartIntent(context, dataset, renderer, 0.3f,
         "Average temperature");
     return intent;

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009, 2010 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import java.util.List;
 import org.achartengine.ChartFactory;
 import org.achartengine.chart.PointStyle;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
+import org.achartengine.renderer.XYSeriesRenderer;
+import org.achartengine.renderer.XYSeriesRenderer.FillOutsideLine;
 
 import android.content.Context;
 import android.content.Intent;
@@ -77,6 +79,18 @@ public class SalesGrowthChart extends AbstractDemoChart {
         dateValues[dateValues.length - 1].getTime(), -4, 11, Color.GRAY, Color.LTGRAY);
     renderer.setYLabels(10);
     renderer.setXRoundedLabels(false);
+    XYSeriesRenderer xyRenderer = (XYSeriesRenderer) renderer.getSeriesRendererAt(0);
+    FillOutsideLine fill = new FillOutsideLine(FillOutsideLine.Type.BOUNDS_ABOVE);
+    fill.setColor(Color.GREEN);
+    xyRenderer.addFillOutsideLine(fill);
+    fill = new FillOutsideLine(FillOutsideLine.Type.BOUNDS_BELOW);
+    fill.setColor(Color.MAGENTA);
+    xyRenderer.addFillOutsideLine(fill);
+    fill = new FillOutsideLine(FillOutsideLine.Type.BOUNDS_ABOVE);
+    fill.setColor(Color.argb(255, 0, 200, 100));
+    fill.setFillRange(new int[] {10, 19});
+    xyRenderer.addFillOutsideLine(fill);
+
     return ChartFactory.getTimeChartIntent(context, buildDateDataset(titles, dates, values),
         renderer, "MMM yyyy");
   }

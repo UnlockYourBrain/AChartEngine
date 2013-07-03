@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,5 +39,9 @@ public class TimeSeries extends XYSeries {
    */
   public synchronized void add(Date x, double y) {
     super.add(x.getTime(), y);
+  }
+  
+  protected double getPadding() {
+    return 1;
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,7 +208,7 @@ public class ChartFactory {
   }
 
   /**
-   * Creates a pie chart intent that can be used to start the graphical view
+   * Creates a pie chart view that can be used to start the graphical view
    * activity.
    * 
    * @param context the context
@@ -227,7 +227,7 @@ public class ChartFactory {
   }
 
   /**
-   * Creates a dial chart intent that can be used to start the graphical view
+   * Creates a dial chart view that can be used to start the graphical view
    * activity.
    * 
    * @param context the context
@@ -246,7 +246,7 @@ public class ChartFactory {
   }
 
   /**
-   * Creates a doughnut chart intent that can be used to start the graphical
+   * Creates a doughnut chart view that can be used to start the graphical
    * view activity.
    * 
    * @param context the context

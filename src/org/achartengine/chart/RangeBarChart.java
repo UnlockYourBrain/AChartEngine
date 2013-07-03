@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package org.achartengine.chart;
 
+import java.util.List;
+
 import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYSeries;
-import org.achartengine.renderer.SimpleSeriesRenderer;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
+import org.achartengine.renderer.XYSeriesRenderer;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -60,10 +62,11 @@ public class RangeBarChart extends BarChart {
    * @param seriesIndex the index of the series currently being drawn
    * @param startIndex the start index of the rendering points
    */
-  public void drawSeries(Canvas canvas, Paint paint, float[] points,
-      SimpleSeriesRenderer seriesRenderer, float yAxisValue, int seriesIndex, int startIndex) {
+  @Override
+  public void drawSeries(Canvas canvas, Paint paint, List<Float> points,
+      XYSeriesRenderer seriesRenderer, float yAxisValue, int seriesIndex, int startIndex) {
     int seriesNr = mDataset.getSeriesCount();
-    int length = points.length;
+    int length = points.size();
     paint.setColor(seriesRenderer.getColor());
     paint.setStyle(Style.FILL);
     float halfDiffX = getHalfDiffX(points, length, seriesNr);
@@ -72,12 +75,12 @@ public class RangeBarChart extends BarChart {
       start = 2;
     }
     for (int i = start; i < length; i += 4) {
-      if (points.length > i + 3) {
-        float xMin = points[i];
-        float yMin = points[i + 1];
+      if (points.size() > i + 3) {
+        float xMin = points.get(i);
+        float yMin = points.get(i + 1);
         // xMin = xMax
-        float xMax = points[i + 2];
-        float yMax = points[i + 3];
+        float xMax = points.get(i + 2);
+        float yMax = points.get(i + 3);
         drawBar(canvas, xMin, yMin, xMax, yMax, halfDiffX, seriesNr, seriesIndex, paint);
       }
     }
@@ -95,31 +98,34 @@ public class RangeBarChart extends BarChart {
    * @param seriesIndex the index of the series currently being drawn
    * @param startIndex the start index of the rendering points
    */
-  protected void drawChartValuesText(Canvas canvas, XYSeries series, SimpleSeriesRenderer renderer,
-      Paint paint, float[] points, int seriesIndex, int startIndex) {
+  protected void drawChartValuesText(Canvas canvas, XYSeries series, XYSeriesRenderer renderer,
+      Paint paint, List<Float> points, int seriesIndex, int startIndex) {
     int seriesNr = mDataset.getSeriesCount();
-    float halfDiffX = getHalfDiffX(points, points.length, seriesNr);
+    float halfDiffX = getHalfDiffX(points, points.size(), seriesNr);
     int start = 0;
     if (startIndex > 0) {
       start = 2;
     }
-    for (int i = start; i < points.length; i += 4) {
+    for (int i = start; i < points.size(); i += 4) {
       int index = startIndex + i / 2;
-      float x = points[i];
+      float x = points.get(i);
       if (mType == Type.DEFAULT) {
         x += seriesIndex * 2 * halfDiffX - (seriesNr - 1.5f) * halfDiffX;
       }
 
-      if (!isNullValue(series.getY(index + 1)) && points.length > i + 3) {
+      if (!isNullValue(series.getY(index + 1)) && points.size() > i + 3) {
         // draw the maximum value
-        drawText(canvas, getLabel(series.getY(index + 1)), x,
-            points[i + 3] - renderer.getChartValuesSpacing(), paint, 0);
+        drawText(canvas, getLabel(renderer.getChartValuesFormat(), series.getY(index + 1)), x,
+            points.get(i + 3) - renderer.getChartValuesSpacing(), paint, 0);
       }
-      if (!isNullValue(series.getY(index)) && points.length > i + 1) {
+      if (!isNullValue(series.getY(index)) && points.size() > i + 1) {
         // draw the minimum value
-        drawText(canvas, getLabel(series.getY(index)), x,
-            points[i + 1] + renderer.getChartValuesTextSize() + renderer.getChartValuesSpacing()
-                - 3, paint, 0);
+        drawText(
+            canvas,
+            getLabel(renderer.getChartValuesFormat(), series.getY(index)),
+            x,
+            points.get(i + 1) + renderer.getChartValuesTextSize()
+                + renderer.getChartValuesSpacing() - 3, paint, 0);
       }
     }
   }

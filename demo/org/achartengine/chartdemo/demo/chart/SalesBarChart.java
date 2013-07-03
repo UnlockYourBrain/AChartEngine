@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009, 2010 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import java.util.List;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.chart.BarChart.Type;
-import org.achartengine.renderer.SimpleSeriesRenderer;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYMultipleSeriesRenderer.Orientation;
+import org.achartengine.renderer.XYSeriesRenderer;
 
 import android.content.Context;
 import android.content.Intent;
@@ -79,7 +79,7 @@ public class SalesBarChart extends AbstractDemoChart {
     renderer.addXTextLabel(12, "Dec");
     int length = renderer.getSeriesRendererCount();
     for (int i = 0; i < length; i++) {
-      SimpleSeriesRenderer seriesRenderer = renderer.getSeriesRendererAt(i);
+      XYSeriesRenderer seriesRenderer = (XYSeriesRenderer) renderer.getSeriesRendererAt(i);
       seriesRenderer.setDisplayChartValues(true);
     }
     return ChartFactory.getBarChartIntent(context, buildBarDataset(titles, values), renderer,

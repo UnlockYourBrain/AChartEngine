@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,12 +64,15 @@ public class MathHelper {
    * @param start start value
    * @param end final value
    * @param approxNumLabels desired number of labels
-   * @return collection containing {start value, end value, increment}
+   * @return collection containing the label values
    */
   public static List<Double> getLabels(final double start, final double end,
       final int approxNumLabels) {
-    FORMAT.setMaximumFractionDigits(5);
     List<Double> labels = new ArrayList<Double>();
+    if (approxNumLabels <= 0) {
+      return labels;
+    }
+    FORMAT.setMaximumFractionDigits(5);
     double[] labelParams = computeLabels(start, end, approxNumLabels);
     // when the start > end the inc will be negative so it will still work
     int numLabels = 1 + (int) ((labelParams[1] - labelParams[0]) / labelParams[2]);
@@ -124,8 +127,9 @@ public class MathHelper {
   }
 
   /**
-   * Given a number, round up to the nearest power of ten times 1, 2, or 5. The
-   * argument must be strictly positive.
+   * Given a number, round up to the nearest power of ten times 1, 2, or 5.
+   * 
+   * @param val the number, it must be strictly positive
    */
   private static double roundUp(final double val) {
     int exponent = (int) Math.floor(Math.log10(val));
@@ -139,36 +143,6 @@ public class MathHelper {
     }
     rval *= Math.pow(10, exponent);
     return rval;
-  }
-
-  /**
-   * Transforms a list of Float values into an array of float.
-   * 
-   * @param values the list of Float
-   * @return the array of floats
-   */
-  public static float[] getFloats(List<Float> values) {
-    int length = values.size();
-    float[] result = new float[length];
-    for (int i = 0; i < length; i++) {
-      result[i] = values.get(i).floatValue();
-    }
-    return result;
-  }
-
-  /**
-   * Transforms a list of Double values into an array of double.
-   * 
-   * @param values the list of Double
-   * @return the array of doubles
-   */
-  public static double[] getDoubles(List<Double> values) {
-    int length = values.size();
-    double[] result = new double[length];
-    for (int i = 0; i < length; i++) {
-      result[i] = values.get(i).doubleValue();
-    }
-    return result;
   }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,15 @@
  */
 package org.achartengine.renderer;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.achartengine.chart.PointStyle;
+import org.achartengine.renderer.XYSeriesRenderer.FillOutsideLine.Type;
 
 import android.graphics.Color;
+import android.graphics.Paint.Align;
 
 /**
  * A renderer for the XY type series.
@@ -25,22 +31,113 @@ import android.graphics.Color;
 public class XYSeriesRenderer extends SimpleSeriesRenderer {
   /** If the chart points should be filled. */
   private boolean mFillPoints = false;
-  /** If the chart should be filled below its line. */
-  private boolean mFillBelowLine = false;
-  /** The fill below the chart line color. */
-  private int mFillColor = Color.argb(125, 0, 0, 200);
+  /** If the chart should be filled outside its line. */
+  private List<FillOutsideLine> mFillBelowLine = new ArrayList<FillOutsideLine>();
   /** The point style. */
   private PointStyle mPointStyle = PointStyle.POINT;
+  /** The point stroke width */
+  private float mPointStrokeWidth = 1;
   /** The chart line width. */
   private float mLineWidth = 1;
+  /** If the values should be displayed above the chart points. */
+  private boolean mDisplayChartValues;
+  /** The minimum distance between displaying chart values. */
+  private int mDisplayChartValuesDistance = 100;
+  /** The chart values text size. */
+  private float mChartValuesTextSize = 10;
+  /** The chart values text alignment. */
+  private Align mChartValuesTextAlign = Align.CENTER;
+  /** The chart values spacing from the data point. */
+  private float mChartValuesSpacing = 5f;
+  /** The annotations text size. */
+  private float mAnnotationsTextSize = 10;
+  /** The annotations text alignment. */
+  private Align mAnnotationsTextAlign = Align.CENTER;
+  /** The annotations color. */
+  private int mAnnotationsColor = DefaultRenderer.TEXT_COLOR;
+
+  /**
+   * A descriptor for the line fill behavior.
+   */
+  public static class FillOutsideLine implements Serializable {
+    public enum Type {
+      NONE, BOUNDS_ALL, BOUNDS_BELOW, BOUNDS_ABOVE, BELOW, ABOVE
+    };
+
+    /** The fill type. */
+    private final Type mType;
+    /** The fill color. */
+    private int mColor = Color.argb(125, 0, 0, 200);
+    /** The fill points index range. */
+    private int[] mFillRange;
+
+    /**
+     * The line fill behavior.
+     * 
+     * @param type the fill type
+     */
+    public FillOutsideLine(Type type) {
+      this.mType = type;
+    }
+
+    /**
+     * Returns the fill color.
+     * 
+     * @return the fill color
+     */
+    public int getColor() {
+      return mColor;
+    }
+
+    /**
+     * Sets the fill color
+     * 
+     * @param color the fill color
+     */
+    public void setColor(int color) {
+      mColor = color;
+    }
+
+    /**
+     * Returns the fill type.
+     * 
+     * @return the fill type
+     */
+    public Type getType() {
+      return mType;
+    }
+
+    /**
+     * Returns the fill range which is the minimum and maximum data index values
+     * for the fill.
+     * 
+     * @return the fill range
+     */
+    public int[] getFillRange() {
+      return mFillRange;
+    }
+
+    /**
+     * Sets the fill range which is the minimum and maximum data index values
+     * for the fill.
+     * 
+     * @param range the fill range
+     */
+    public void setFillRange(int[] range) {
+      mFillRange = range;
+    }
+  }
 
   /**
    * Returns if the chart should be filled below the line.
    * 
    * @return the fill below line status
+   * 
+   * @deprecated Use {@link #getFillOutsideLine()} instead.
    */
+  @Deprecated
   public boolean isFillBelowLine() {
-    return mFillBelowLine;
+    return mFillBelowLine.size() > 0;
   }
 
   /**
@@ -48,9 +145,37 @@ public class XYSeriesRenderer extends SimpleSeriesRenderer {
    * line transforms a line chart into an area chart.
    * 
    * @param fill the fill below line flag value
+   * 
+   * @deprecated Use {@link #addFillOutsideLine(FillOutsideLine)} instead.
    */
+  @Deprecated
   public void setFillBelowLine(boolean fill) {
-    mFillBelowLine = fill;
+    mFillBelowLine.clear();
+    if (fill) {
+      mFillBelowLine.add(new FillOutsideLine(Type.BOUNDS_ALL));
+    } else {
+      mFillBelowLine.add(new FillOutsideLine(Type.NONE));
+    }
+  }
+
+  /**
+   * Returns the type of the outside fill of the line.
+   * 
+   * @return the type of the outside fill of the line.
+   */
+  public FillOutsideLine[] getFillOutsideLine() {
+    return mFillBelowLine.toArray(new FillOutsideLine[0]);
+  }
+
+  /**
+   * Sets if the line chart should be filled outside its line. Filling outside
+   * with FillOutsideLine.INTEGRAL the line transforms a line chart into an area
+   * chart.
+   * 
+   * @param fill the type of the filling
+   */
+  public void addFillOutsideLine(FillOutsideLine fill) {
+    mFillBelowLine.add(fill);
   }
 
   /**
@@ -72,21 +197,17 @@ public class XYSeriesRenderer extends SimpleSeriesRenderer {
   }
 
   /**
-   * Returns the fill below line color.
-   * 
-   * @return the fill below line color
-   */
-  public int getFillBelowLineColor() {
-    return mFillColor;
-  }
-
-  /**
    * Sets the fill below the line color.
    * 
    * @param color the fill below line color
+   * 
+   * @deprecated Use FillOutsideLine.setColor instead
    */
+  @Deprecated
   public void setFillBelowLineColor(int color) {
-    mFillColor = color;
+    if (mFillBelowLine.size() > 0) {
+      mFillBelowLine.get(0).setColor(color);
+    }
   }
 
   /**
@@ -108,6 +229,24 @@ public class XYSeriesRenderer extends SimpleSeriesRenderer {
   }
 
   /**
+   * Returns the point stroke width in pixels.
+   * 
+   * @return the point stroke width in pixels
+   */
+  public float getPointStrokeWidth() {
+    return mPointStrokeWidth;
+  }
+
+  /**
+   * Sets the point stroke width in pixels.
+   * 
+   * @param strokeWidth the point stroke width in pixels
+   */
+  public void setPointStrokeWidth(float strokeWidth) {
+    mPointStrokeWidth = strokeWidth;
+  }
+
+  /**
    * Returns the chart line width.
    * 
    * @return the line width
@@ -124,5 +263,150 @@ public class XYSeriesRenderer extends SimpleSeriesRenderer {
   public void setLineWidth(float lineWidth) {
     mLineWidth = lineWidth;
   }
-  
+
+  /**
+   * Returns if the chart point values should be displayed as text.
+   * 
+   * @return if the chart point values should be displayed as text
+   */
+  public boolean isDisplayChartValues() {
+    return mDisplayChartValues;
+  }
+
+  /**
+   * Sets if the chart point values should be displayed as text.
+   * 
+   * @param display if the chart point values should be displayed as text
+   */
+  public void setDisplayChartValues(boolean display) {
+    mDisplayChartValues = display;
+  }
+
+  /**
+   * Returns the chart values minimum distance.
+   * 
+   * @return the chart values minimum distance
+   */
+  public int getDisplayChartValuesDistance() {
+    return mDisplayChartValuesDistance;
+  }
+
+  /**
+   * Sets chart values minimum distance.
+   * 
+   * @param distance the chart values minimum distance
+   */
+  public void setDisplayChartValuesDistance(int distance) {
+    mDisplayChartValuesDistance = distance;
+  }
+
+  /**
+   * Returns the chart values text size.
+   * 
+   * @return the chart values text size
+   */
+  public float getChartValuesTextSize() {
+    return mChartValuesTextSize;
+  }
+
+  /**
+   * Sets the chart values text size.
+   * 
+   * @param textSize the chart values text size
+   */
+  public void setChartValuesTextSize(float textSize) {
+    mChartValuesTextSize = textSize;
+  }
+
+  /**
+   * Returns the chart values text align.
+   * 
+   * @return the chart values text align
+   */
+  public Align getChartValuesTextAlign() {
+    return mChartValuesTextAlign;
+  }
+
+  /**
+   * Sets the chart values text align.
+   * 
+   * @param align the chart values text align
+   */
+  public void setChartValuesTextAlign(Align align) {
+    mChartValuesTextAlign = align;
+  }
+
+  /**
+   * Returns the chart values spacing from the data point.
+   * 
+   * @return the chart values spacing
+   */
+  public float getChartValuesSpacing() {
+    return mChartValuesSpacing;
+  }
+
+  /**
+   * Sets the chart values spacing from the data point.
+   * 
+   * @param spacing the chart values spacing (in pixels) from the chart data
+   *          point
+   */
+  public void setChartValuesSpacing(float spacing) {
+    mChartValuesSpacing = spacing;
+  }
+
+  /**
+   * Returns the annotations text size.
+   * 
+   * @return the annotations text size
+   */
+  public float getAnnotationsTextSize() {
+    return mAnnotationsTextSize;
+  }
+
+  /**
+   * Sets the annotations text size.
+   * 
+   * @param textSize the annotations text size
+   */
+  public void setAnnotationsTextSize(float textSize) {
+    mAnnotationsTextSize = textSize;
+  }
+
+  /**
+   * Returns the annotations text align.
+   * 
+   * @return the annotations text align
+   */
+  public Align getAnnotationsTextAlign() {
+    return mAnnotationsTextAlign;
+  }
+
+  /**
+   * Sets the annotations text align.
+   * 
+   * @param align the chart values text align
+   */
+  public void setAnnotationsTextAlign(Align align) {
+    mAnnotationsTextAlign = align;
+  }
+
+  /**
+   * Returns the annotations color.
+   * 
+   * @return the annotations color
+   */
+  public int getAnnotationsColor() {
+    return mAnnotationsColor;
+  }
+
+  /**
+   * Sets the annotations color.
+   * 
+   * @param color the annotations color
+   */
+  public void setAnnotationsColor(int color) {
+    mAnnotationsColor = color;
+  }
+
 }

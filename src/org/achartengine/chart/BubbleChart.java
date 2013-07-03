@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package org.achartengine.chart;
+
+import java.util.List;
 
 import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYValueSeries;
@@ -63,34 +65,34 @@ public class BubbleChart extends XYChart {
    * @param seriesIndex the index of the series currently being drawn
    * @param startIndex the start index of the rendering points
    */
-  public void drawSeries(Canvas canvas, Paint paint, float[] points,
-      SimpleSeriesRenderer seriesRenderer, float yAxisValue, int seriesIndex, int startIndex) {
-    XYSeriesRenderer renderer = (XYSeriesRenderer) seriesRenderer;
+  @Override
+  public void drawSeries(Canvas canvas, Paint paint, List<Float> points,
+      XYSeriesRenderer renderer, float yAxisValue, int seriesIndex, int startIndex) {
     paint.setColor(renderer.getColor());
     paint.setStyle(Style.FILL);
-    int length = points.length;
+    int length = points.size();
     XYValueSeries series = (XYValueSeries) mDataset.getSeriesAt(seriesIndex);
     double max = series.getMaxValue();
     double coef = MAX_BUBBLE_SIZE / max;
     for (int i = 0; i < length; i += 2) {
       double size = series.getValue(startIndex + i / 2) * coef + MIN_BUBBLE_SIZE;
-      drawCircle(canvas, paint, points[i], points[i + 1], (float) size);
+      drawCircle(canvas, paint, points.get(i), points.get(i + 1), (float) size);
     }
   }
 
   @Override
-  protected ClickableArea[] clickableAreasForPoints(float[] points, double[] values,
+  protected ClickableArea[] clickableAreasForPoints(List<Float> points, List<Double> values,
       float yAxisValue, int seriesIndex, int startIndex) {
-    int length = points.length;
+    int length = points.size();
     XYValueSeries series = (XYValueSeries) mDataset.getSeriesAt(seriesIndex);
     double max = series.getMaxValue();
     double coef = MAX_BUBBLE_SIZE / max;
     ClickableArea[] ret = new ClickableArea[length / 2];
     for (int i = 0; i < length; i += 2) {
       double size = series.getValue(startIndex + i / 2) * coef + MIN_BUBBLE_SIZE;
-      ret[i / 2] = new ClickableArea(new RectF(points[i] - (float) size, points[i + 1]
-          - (float) size, points[i] + (float) size, points[i + 1] + (float) size), values[i],
-          values[i + 1]);
+      ret[i / 2] = new ClickableArea(new RectF(points.get(i) - (float) size, points.get(i + 1)
+          - (float) size, points.get(i) + (float) size, points.get(i + 1) + (float) size),
+          values.get(i), values.get(i + 1));
     }
     return ret;
   }

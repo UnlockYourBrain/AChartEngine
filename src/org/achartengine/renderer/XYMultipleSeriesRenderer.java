@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.achartengine.renderer;
 
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -77,13 +78,19 @@ public class XYMultipleSeriesRenderer extends DefaultRenderer {
   /** The point size for charts displaying points. */
   private float mPointSize = 3;
   /** The grid color. */
-  private int mGridColor = Color.argb(75, 200, 200, 200);
+  private int[] mGridColors;
   /** The number of scales. */
   private int scalesCount;
   /** The X axis labels alignment. */
   private Align xLabelsAlign = Align.CENTER;
   /** The Y axis labels alignment. */
   private Align[] yLabelsAlign;
+  /** The X text label padding. */
+  private float mXLabelsPadding = 0;
+  /** The Y text label padding. */
+  private float mYLabelsPadding = 0;
+  /** The Y axis labels vertical padding. */
+  private float mYLabelsVerticalPadding = 2;
   /** The Y axis alignment. */
   private Align[] yAxisAlign;
   /** The X axis labels color. */
@@ -95,6 +102,14 @@ public class XYMultipleSeriesRenderer extends DefaultRenderer {
    * charts.
    */
   private boolean mXRoundedLabels = true;
+  /** The label format. */
+  private NumberFormat mLabelFormat;
+  /** A constant value for the bar chart items width. */
+  private float mBarWidth = -1;
+  /** The zoom in limit permitted in the axis X */
+  private double mZoomInLimitX = 0;
+  /** The zoom in limit permitted in the axis Y */
+  private double mZoomInLimitY = 0;
 
   /**
    * An enum for the XY chart orientation of the X axis.
@@ -136,8 +151,10 @@ public class XYMultipleSeriesRenderer extends DefaultRenderer {
     mMaxX = new double[scales];
     mMinY = new double[scales];
     mMaxY = new double[scales];
+    mGridColors = new int[scales];
     for (int i = 0; i < scales; i++) {
       mYLabelsColor[i] = TEXT_COLOR;
+      mGridColors[i] = Color.argb(75, 200, 200, 200);
       initAxesRangeForScale(i);
     }
   }
@@ -703,29 +720,21 @@ public class XYMultipleSeriesRenderer extends DefaultRenderer {
   }
 
   /**
-   * Sets if the chart point values should be displayed as text.
+   * Returns the constant bar chart item width in pixels.
    * 
-   * @param display if the chart point values should be displayed as text
-   * @deprecated use SimpleSeriesRenderer.setDisplayChartValues() instead
+   * @return the bar width
    */
-  public void setDisplayChartValues(boolean display) {
-    SimpleSeriesRenderer[] renderers = getSeriesRenderers();
-    for (SimpleSeriesRenderer renderer : renderers) {
-      renderer.setDisplayChartValues(display);
-    }
+  public float getBarWidth() {
+    return mBarWidth;
   }
 
   /**
-   * Sets the chart values text size.
+   * Sets the bar chart item constant width in pixels.
    * 
-   * @param textSize the chart values text size
-   * @deprecated use SimpleSeriesRenderer.setChartValuesTextSize() instead
+   * @param width width in pixels
    */
-  public void setChartValuesTextSize(float textSize) {
-    SimpleSeriesRenderer[] renderers = getSeriesRenderers();
-    for (SimpleSeriesRenderer renderer : renderers) {
-      renderer.setChartValuesTextSize(textSize);
-    }
+  public void setBarWidth(float width) {
+    mBarWidth = width;
   }
 
   /**
@@ -765,7 +774,7 @@ public class XYMultipleSeriesRenderer extends DefaultRenderer {
     mPanXEnabled = enabledX;
     mPanYEnabled = enabledY;
   }
-  
+
   /**
    * Override {@link DefaultRenderer#setPanEnabled(boolean)} so it can be
    * delegated to {@link #setPanEnabled(boolean, boolean)}.
@@ -863,11 +872,12 @@ public class XYMultipleSeriesRenderer extends DefaultRenderer {
 
   /**
    * Returns the grid color.
+   * @param scale the renderer index
    * 
    * @return the grid color
    */
-  public int getGridColor() {
-    return mGridColor;
+  public int getGridColor(int scale) {
+    return mGridColors[scale];
   }
 
   /**
@@ -876,7 +886,17 @@ public class XYMultipleSeriesRenderer extends DefaultRenderer {
    * @param color the grid color
    */
   public void setGridColor(int color) {
-    mGridColor = color;
+    setGridColor(color, 0);
+  }
+
+  /**
+   * Sets the color of the grid.
+   * 
+   * @param color the grid color
+   * @param scale the renderer scale
+   */
+  public void setGridColor(int color, int scale) {
+    mGridColors[scale] = color;
   }
 
   /**
@@ -1131,8 +1151,129 @@ public class XYMultipleSeriesRenderer extends DefaultRenderer {
     yLabelsAlign[scale] = align;
   }
 
+  /**
+   * Returns the X labels padding.
+   * 
+   * @return X labels padding
+   */
+  public float getXLabelsPadding() {
+    return mXLabelsPadding;
+  }
+
+  /**
+   * Sets the X labels padding
+   * 
+   * @param padding the amount of padding between the axis and the label
+   */
+  public void setXLabelsPadding(float padding) {
+    mXLabelsPadding = padding;
+  }
+
+  /**
+   * Returns the Y labels padding.
+   * 
+   * @return Y labels padding
+   */
+  public float getYLabelsPadding() {
+    return mYLabelsPadding;
+  }
+
+  /**
+   * Sets the Y labels vertical padding
+   * 
+   * @param padding the amount of vertical padding
+   */
+  public void setYLabelsVerticalPadding(float padding) {
+    mYLabelsVerticalPadding = padding;
+  }
+
+  /**
+   * Returns the Y labels vertical padding.
+   * 
+   * @return Y labels vertical padding
+   */
+  public float getYLabelsVerticalPadding() {
+    return mYLabelsVerticalPadding;
+  }
+
+  /**
+   * Sets the Y labels padding
+   * 
+   * @param padding the amount of padding between the axis and the label
+   */
+  public void setYLabelsPadding(float padding) {
+    mYLabelsPadding = padding;
+  }
+
+  /**
+   * Returns the number format for displaying labels.
+   * 
+   * @return the number format for labels
+   */
+  public NumberFormat getLabelFormat() {
+    return mLabelFormat;
+  }
+
+  /**
+   * Sets the number format for displaying labels.
+   * 
+   * @param format the number format for labels
+   */
+  public void setLabelFormat(NumberFormat format) {
+    mLabelFormat = format;
+  }
+
+  /**
+   * Returns the zoom in limit permitted in the axis X.
+   *
+   * @return the maximum zoom in permitted in the axis X
+   *
+   * @see #setZoomInLimitX(double)
+   */
+  public double getZoomInLimitX() {
+    return mZoomInLimitX;
+  }
+
+  /**
+   * Sets the zoom in limit permitted in the axis X.
+   *
+   * This function prevent that the distance between {@link #getXAxisMin()} and
+   * {@link #getXAxisMax()} can't be greater or equal than
+   * {@link #getZoomInLimitX()}
+   *
+   * @param zoomInLimitX the maximum distance permitted between
+   * {@link #getXAxisMin()} and {@link #getXAxisMax()}.
+   */
+  public void setZoomInLimitX(double zoomInLimitX) {
+    this.mZoomInLimitX = zoomInLimitX;
+  }
+
+  /**
+   * Returns the zoom in limit permitted in the axis Y.
+   *
+   * @return the maximum in zoom permitted in the axis Y
+   *
+   * @see #setZoomInLimitY(double)
+   */
+  public double getZoomInLimitY() {
+    return mZoomInLimitY;
+  }
+
+  /**
+   * Sets zoom in limit permitted in the axis Y.
+   *
+   * This function prevent that the distance between {@link #getYAxisMin()} and
+   * {@link #getYAxisMax()} can't be greater or equal than
+   * {@link #getZoomInLimitY()}
+   *
+   * @param zoomInLimitY the maximum distance permitted between
+   * {@link #getYAxisMin()} and {@link #getYAxisMax()}
+   */
+  public void setZoomInLimitY(double zoomInLimitY) {
+    this.mZoomInLimitY = zoomInLimitY;
+  }
+
   public int getScalesCount() {
     return scalesCount;
   }
-
 }

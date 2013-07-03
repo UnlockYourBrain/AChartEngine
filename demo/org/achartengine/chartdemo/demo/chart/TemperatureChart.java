@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009, 2010 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import org.achartengine.ChartFactory;
 import org.achartengine.chart.BarChart.Type;
 import org.achartengine.model.RangeCategorySeries;
 import org.achartengine.model.XYMultipleSeriesDataset;
-import org.achartengine.renderer.SimpleSeriesRenderer;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
+import org.achartengine.renderer.XYSeriesRenderer;
 
 import android.content.Context;
 import android.content.Intent;
@@ -86,7 +86,7 @@ public class TemperatureChart extends AbstractDemoChart {
     renderer.addYTextLabel(20, "Nice");
     renderer.setMargins(new int[] {30, 70, 10, 0});
     renderer.setYLabelsAlign(Align.RIGHT);
-    SimpleSeriesRenderer r = renderer.getSeriesRendererAt(0);
+    XYSeriesRenderer r = (XYSeriesRenderer) renderer.getSeriesRendererAt(0);
     r.setDisplayChartValues(true);
     r.setChartValuesTextSize(12);
     r.setChartValuesSpacing(3);

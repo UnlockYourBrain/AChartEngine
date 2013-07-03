@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package org.achartengine.chart;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.renderer.SimpleSeriesRenderer;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
+import org.achartengine.renderer.XYSeriesRenderer.FillOutsideLine;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -73,46 +77,124 @@ public class LineChart extends XYChart {
    * @param seriesIndex the index of the series currently being drawn
    * @param startIndex the start index of the rendering points
    */
-  public void drawSeries(Canvas canvas, Paint paint, float[] points,
-      SimpleSeriesRenderer seriesRenderer, float yAxisValue, int seriesIndex, int startIndex) {
-    int length = points.length;
-    XYSeriesRenderer renderer = (XYSeriesRenderer) seriesRenderer;
+  @Override
+  public void drawSeries(Canvas canvas, Paint paint, List<Float> points,
+      XYSeriesRenderer renderer, float yAxisValue, int seriesIndex, int startIndex) {
     float lineWidth = paint.getStrokeWidth();
     paint.setStrokeWidth(renderer.getLineWidth());
-    if (renderer.isFillBelowLine()) {
-      paint.setColor(renderer.getFillBelowLineColor());
-      int pLength = points.length;
-      float[] fillPoints = new float[pLength + 4];
-      System.arraycopy(points, 0, fillPoints, 0, length);
-      fillPoints[0] = points[0] + 1;
-      fillPoints[length] = fillPoints[length - 2];
-      fillPoints[length + 1] = yAxisValue;
-      fillPoints[length + 2] = fillPoints[0];
-      fillPoints[length + 3] = fillPoints[length + 1];
-      for (int i = 0; i < length + 4; i += 2) {
-        if (fillPoints[i + 1] < 0) {
-          fillPoints[i + 1] = 0;
+    final FillOutsideLine[] fillOutsideLine = renderer.getFillOutsideLine();
+
+    for (FillOutsideLine fill : fillOutsideLine) {
+      if (fill.getType() != FillOutsideLine.Type.NONE) {
+        paint.setColor(fill.getColor());
+        // TODO: find a way to do area charts without duplicating data
+        List<Float> fillPoints = new ArrayList<Float>();
+        int[] range = fill.getFillRange();
+        if (range == null) {
+          fillPoints.addAll(points);
+        } else {
+          fillPoints.addAll(points.subList(range[0] * 2, range[1] * 2));
         }
+
+        final float referencePoint;
+        switch (fill.getType()) {
+        case BOUNDS_ALL:
+          referencePoint = yAxisValue;
+          break;
+        case BOUNDS_BELOW:
+          referencePoint = yAxisValue;
+          break;
+        case BOUNDS_ABOVE:
+          referencePoint = yAxisValue;
+          break;
+        case BELOW:
+          referencePoint = canvas.getHeight();
+          break;
+        case ABOVE:
+          referencePoint = 0;
+          break;
+        default:
+          throw new RuntimeException(
+              "You have added a new type of filling but have not implemented.");
+        }
+        if (fill.getType() == FillOutsideLine.Type.BOUNDS_ABOVE
+            || fill.getType() == FillOutsideLine.Type.BOUNDS_BELOW) {
+          List<Float> boundsPoints = new ArrayList<Float>();
+          boolean add = false;
+          if (fill.getType() == FillOutsideLine.Type.BOUNDS_ABOVE
+              && fillPoints.get(1) < referencePoint
+              || fill.getType() == FillOutsideLine.Type.BOUNDS_BELOW
+              && fillPoints.get(1) > referencePoint) {
+            boundsPoints.add(fillPoints.get(0));
+            boundsPoints.add(fillPoints.get(1));
+            add = true;
+          }
+
+          for (int i = 3; i < fillPoints.size(); i += 2) {
+            float prevValue = fillPoints.get(i - 2);
+            float value = fillPoints.get(i);
+
+            if (prevValue < referencePoint && value > referencePoint || prevValue > referencePoint
+                && value < referencePoint) {
+              float prevX = fillPoints.get(i - 3);
+              float x = fillPoints.get(i - 1);
+              boundsPoints.add(prevX + (x - prevX) * (referencePoint - prevValue)
+                  / (value - prevValue));
+              boundsPoints.add(referencePoint);
+              if (fill.getType() == FillOutsideLine.Type.BOUNDS_ABOVE && value > referencePoint
+                  || fill.getType() == FillOutsideLine.Type.BOUNDS_BELOW && value < referencePoint) {
+                i += 2;
+                add = false;
+              } else {
+                boundsPoints.add(x);
+                boundsPoints.add(value);
+                add = true;
+              }
+            } else {
+              if (add || fill.getType() == FillOutsideLine.Type.BOUNDS_ABOVE
+                  && value < referencePoint || fill.getType() == FillOutsideLine.Type.BOUNDS_BELOW
+                  && value > referencePoint) {
+                boundsPoints.add(fillPoints.get(i - 1));
+                boundsPoints.add(value);
+              }
+            }
+          }
+
+          fillPoints.clear();
+          fillPoints.addAll(boundsPoints);
+        }
+        int length = fillPoints.size();
+        fillPoints.set(0, fillPoints.get(0) + 1);
+        fillPoints.add(fillPoints.get(length - 2));
+        fillPoints.add(referencePoint);
+        fillPoints.add(fillPoints.get(0));
+        fillPoints.add(fillPoints.get(length + 1));
+        for (int i = 0; i < length + 4; i += 2) {
+          if (fillPoints.get(i + 1) < 0) {
+            fillPoints.set(i + 1, 0f);
+          }
+        }
+
+        paint.setStyle(Style.FILL);
+        drawPath(canvas, fillPoints, paint, true);
       }
-      paint.setStyle(Style.FILL);
-      drawPath(canvas, fillPoints, paint, true);
     }
-    paint.setColor(seriesRenderer.getColor());
+    paint.setColor(renderer.getColor());
     paint.setStyle(Style.STROKE);
     drawPath(canvas, points, paint, false);
     paint.setStrokeWidth(lineWidth);
   }
 
   @Override
-  protected ClickableArea[] clickableAreasForPoints(float[] points, double[] values,
+  protected ClickableArea[] clickableAreasForPoints(List<Float> points, List<Double> values,
       float yAxisValue, int seriesIndex, int startIndex) {
-    int length = points.length;
+    int length = points.size();
     ClickableArea[] ret = new ClickableArea[length / 2];
     for (int i = 0; i < length; i += 2) {
       int selectableBuffer = mRenderer.getSelectableBuffer();
-      ret[i / 2] = new ClickableArea(new RectF(points[i] - selectableBuffer, points[i + 1]
-          - selectableBuffer, points[i] + selectableBuffer, points[i + 1] + selectableBuffer),
-          values[i], values[i + 1]);
+      ret[i / 2] = new ClickableArea(new RectF(points.get(i) - selectableBuffer, points.get(i + 1)
+          - selectableBuffer, points.get(i) + selectableBuffer, points.get(i + 1)
+          + selectableBuffer), values.get(i), values.get(i + 1));
     }
     return ret;
   }

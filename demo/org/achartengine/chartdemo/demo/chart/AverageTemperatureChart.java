@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009, 2010 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import java.util.List;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.chart.PointStyle;
+import org.achartengine.model.XYMultipleSeriesDataset;
+import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 
@@ -86,8 +88,17 @@ public class AverageTemperatureChart extends AbstractDemoChart {
     renderer.setZoomButtonsVisible(true);
     renderer.setPanLimits(new double[] { -10, 20, -10, 40 });
     renderer.setZoomLimits(new double[] { -10, 20, -10, 40 });
-    Intent intent = ChartFactory.getLineChartIntent(context, buildDataset(titles, x, values),
-        renderer, "Average temperature");
+
+    XYMultipleSeriesDataset dataset = buildDataset(titles, x, values);
+    XYSeries series = dataset.getSeriesAt(0);
+    series.addAnnotation("Vacation", 6, 28);
+
+    XYSeriesRenderer r = (XYSeriesRenderer) renderer.getSeriesRendererAt(0);
+    r.setAnnotationsColor(Color.GREEN);
+    r.setAnnotationsTextSize(15);
+    r.setAnnotationsTextAlign(Align.CENTER);
+    Intent intent = ChartFactory.getLineChartIntent(context, dataset, renderer,
+        "Average temperature");
     return intent;
   }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,17 @@ public class PieSegment implements Serializable {
    * @return true if in segment, false otherwise.
    */
   public boolean isInSegment(double angle) {
-    return angle >= mStartAngle && angle <= mEndAngle;
+    if (angle >= mStartAngle && angle <= mEndAngle) {
+      return true;
+    }
+    double cAngle = angle % 360;
+    double startAngle = mStartAngle;
+    double stopAngle = mEndAngle;
+    while (stopAngle > 360) {
+      startAngle -= 360;
+      stopAngle -= 360;
+    }
+    return cAngle >= startAngle && cAngle <= stopAngle;
   }
 
   protected float getStartAngle() {

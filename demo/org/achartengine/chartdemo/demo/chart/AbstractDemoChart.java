@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009, 2010 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,7 +237,7 @@ public abstract class AbstractDemoChart implements IDemoChart {
     renderer.setLegendTextSize(15);
     int length = colors.length;
     for (int i = 0; i < length; i++) {
-      SimpleSeriesRenderer r = new SimpleSeriesRenderer();
+      XYSeriesRenderer r = new XYSeriesRenderer();
       r.setColor(colors[i]);
       renderer.addSeriesRenderer(r);
     }

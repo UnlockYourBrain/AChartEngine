@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009, 2010 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ public class BudgetDoughnutChart extends AbstractDemoChart {
     titles.add(new String[] { "P1", "P2", "P3", "P4", "P5" });
     titles.add(new String[] { "Project1", "Project2", "Project3", "Project4", "Project5" });
     int[] colors = new int[] { Color.BLUE, Color.GREEN, Color.MAGENTA, Color.YELLOW, Color.CYAN };
+
     DefaultRenderer renderer = buildCategoryRenderer(colors);
     renderer.setApplyBackgroundColor(true);
     renderer.setBackgroundColor(Color.rgb(222, 222, 200));

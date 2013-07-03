@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 package org.achartengine.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.SortedMap;
-import java.util.TreeMap;
 
 import org.achartengine.util.IndexXYMap;
 import org.achartengine.util.MathHelper;
@@ -43,6 +44,12 @@ public class XYSeries implements Serializable {
   private double mMaxY = -MathHelper.NULL_VALUE;
   /** The scale number for this series. */
   private final int mScaleNumber;
+  /** A padding value that will be added when adding values with the same X. */
+  private static final double PADDING = 0.000000000001;
+  /** Contains the annotations. */
+  private List<String> mAnnotations = new ArrayList<String>();
+  /** A map contain a (x,y) value for each String annotation. */
+  private final IndexXYMap<Double, Double> mStringXY = new IndexXYMap<Double, Double>();
 
   /**
    * Builds a new XY series.
@@ -123,8 +130,34 @@ public class XYSeries implements Serializable {
    * @param y the value for the Y axis
    */
   public synchronized void add(double x, double y) {
+    while (mXY.get(x) != null) {
+      // add a very small value to x such as data points sharing the same x will
+      // still be added
+      x += getPadding();
+    }
     mXY.put(x, y);
     updateRange(x, y);
+  }
+
+  /**
+   * Adds a new value to the series at the specified index.
+   * 
+   * @param index the index to be added the data to
+   * @param x the value for the X axis
+   * @param y the value for the Y axis
+   */
+  public synchronized void add(int index, double x, double y) {
+    while (mXY.get(x) != null) {
+      // add a very small value to x such as data points sharing the same x will
+      // still be added
+      x += getPadding();
+    }
+    mXY.put(index, x, y);
+    updateRange(x, y);
+  }
+  
+  protected double getPadding() {
+    return PADDING;
   }
 
   /**
@@ -146,6 +179,7 @@ public class XYSeries implements Serializable {
    */
   public synchronized void clear() {
     mXY.clear();
+    mStringXY.clear();
     initRange();
   }
 
@@ -170,39 +204,105 @@ public class XYSeries implements Serializable {
   }
 
   /**
+   * Add an String at (x,y) coordinates
+   * 
+   * @param annotation String text
+   * @param x
+   * @param y
+   */
+  public void addAnnotation(String annotation, double x, double y) {
+    mAnnotations.add(annotation);
+    mStringXY.put(x, y);
+  }
+
+  /**
+   * Remove an String at index
+   * 
+   * @param index
+   */
+  public void removeAnnotation(int index) {
+    mAnnotations.remove(index);
+    mStringXY.removeByIndex(index);
+  }
+
+  /**
+   * Get X coordinate of the annotation at index
+   * 
+   * @param index the index in the annotations list
+   * @return the corresponding annotation X value
+   */
+  public double getAnnotationX(int index) {
+    return mStringXY.getXByIndex(index);
+  }
+
+  /**
+   * Get Y coordinate of the annotation at index
+   * 
+   * @param index the index in the annotations list
+   * @return the corresponding annotation Y value
+   */
+  public double getAnnotationY(int index) {
+    return mStringXY.getYByIndex(index);
+  }
+
+  /**
+   * Get the annotations count
+   * 
+   * @return the annotations count
+   */
+  public int getAnnotationCount() {
+    return mAnnotations.size();
+  }
+
+  /**
+   * Get the String at index
+   * 
+   * @param index
+   * @return String
+   */
+  public String getAnnotationAt(int index) {
+    return mAnnotations.get(index);
+  }
+
+  /**
    * Returns submap of x and y values according to the given start and end
    * 
    * @param start start x value
    * @param stop stop x value
+   * @param beforeAfterPoints if the points before and after the first and last
+   *          visible ones must be displayed
    * @return a submap of x and y values
    */
   public synchronized SortedMap<Double, Double> getRange(double start, double stop,
-      int beforeAfterPoints) {
-    // we need to add one point before the start and one point after the end (if
-    // there are any)
-    // to ensure that line doesn't end before the end of the screen
+      boolean beforeAfterPoints) {
+    if (beforeAfterPoints) {
+      // we need to add one point before the start and one point after the end
+      // (if
+      // there are any)
+      // to ensure that line doesn't end before the end of the screen
 
-    // this would be simply: start = mXY.lowerKey(start) but NavigableMap is
-    // available since API 9
-    SortedMap<Double, Double> headMap = mXY.headMap(start);
-    if (!headMap.isEmpty()) {
-      start = headMap.lastKey();
-    }
+      // this would be simply: start = mXY.lowerKey(start) but NavigableMap is
+      // available since API 9
+      SortedMap<Double, Double> headMap = mXY.headMap(start);
+      if (!headMap.isEmpty()) {
+        start = headMap.lastKey();
+      }
 
-    // this would be simply: end = mXY.higherKey(end) but NavigableMap is
-    // available since API 9
-    // so we have to do this hack in order to support older versions
-    SortedMap<Double, Double> tailMap = mXY.tailMap(stop);
-    if (!tailMap.isEmpty()) {
-      Iterator<Double> tailIterator = tailMap.keySet().iterator();
-      Double next = tailIterator.next();
-      if (tailIterator.hasNext()) {
-        stop = tailIterator.next();
-      } else {
-        stop += next;
+      // this would be simply: end = mXY.higherKey(end) but NavigableMap is
+      // available since API 9
+      // so we have to do this hack in order to support older versions
+      SortedMap<Double, Double> tailMap = mXY.tailMap(stop);
+      if (!tailMap.isEmpty()) {
+        Iterator<Double> tailIterator = tailMap.keySet().iterator();
+        Double next = tailIterator.next();
+        if (tailIterator.hasNext()) {
+          stop = tailIterator.next();
+        } else {
+          stop += next;
+        }
       }
     }
-    return new TreeMap<Double, Double>(mXY.subMap(start, stop));
+    return mXY.subMap(start, stop);
   }
 
   public int getIndexForKey(double key) {

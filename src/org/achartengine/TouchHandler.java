@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,6 +152,8 @@ public class TouchHandler implements ITouchHandler {
   }
 
   private void applyZoom(float zoomRate, int axis) {
+    zoomRate = Math.max(zoomRate, 0.9f);
+    zoomRate = Math.min(zoomRate, 1.1f);
     if (zoomRate > 0.9 && zoomRate < 1.1) {
       mPinchZoom.setZoomRate(zoomRate);
       mPinchZoom.apply(axis);

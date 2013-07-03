@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 - 2012 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,12 @@ public class IndexXYMap<K, V> extends TreeMap<K, V> {
 
   public V put(K key, V value) {
     indexList.add(key);
+    updateMaxXDifference();
+    return super.put(key, value);
+  }
+
+  public V put(int index, K key, V value) {
+    indexList.add(index, key);
     updateMaxXDifference();
     return super.put(key, value);
   }

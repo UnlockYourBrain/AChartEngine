@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009, 2010 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.achartengine.ChartFactory;
 import org.achartengine.chart.PointStyle;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
+import org.achartengine.renderer.XYSeriesRenderer.FillOutsideLine;
 
 import android.content.Context;
 import android.content.Intent;
@@ -83,10 +84,14 @@ public class SalesComparisonChart extends AbstractDemoChart {
     renderer.setAxisTitleTextSize(15);
     renderer.setLegendTextSize(15);
     length = renderer.getSeriesRendererCount();
+
     for (int i = 0; i < length; i++) {
       XYSeriesRenderer seriesRenderer = (XYSeriesRenderer) renderer.getSeriesRendererAt(i);
-      seriesRenderer.setFillBelowLine(i == length - 1);
-      seriesRenderer.setFillBelowLineColor(colors[i]);
+      if (i == length - 1) {
+        FillOutsideLine fill = new FillOutsideLine(FillOutsideLine.Type.BOUNDS_ALL);
+        fill.setColor(Color.GREEN);
+        seriesRenderer.addFillOutsideLine(fill);
+      }
       seriesRenderer.setLineWidth(2.5f);
       seriesRenderer.setDisplayChartValues(true);
       seriesRenderer.setChartValuesTextSize(10f);
@@ -94,5 +99,4 @@ public class SalesComparisonChart extends AbstractDemoChart {
     return ChartFactory.getCubicLineChartIntent(context, buildBarDataset(titles, values), renderer,
         0.5f);
   }
-
 }

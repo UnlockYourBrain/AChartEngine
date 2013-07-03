@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009, 2010 SC 4ViewSoft SRL
+ * Copyright (C) 2009 - 2013 SC 4ViewSoft SRL
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.achartengine.chartdemo.demo.chart;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.renderer.DefaultRenderer;
+import org.achartengine.renderer.SimpleSeriesRenderer;
 
 import android.content.Context;
 import android.content.Intent;
@@ -58,8 +59,14 @@ public class BudgetPieChart extends AbstractDemoChart {
     renderer.setZoomEnabled(true);
     renderer.setChartTitleTextSize(20);
     renderer.setDisplayValues(true);
-    Intent intent = ChartFactory.getPieChartIntent(context, buildCategoryDataset("Project budget", values),
-        renderer, "Budget");
+    renderer.setShowLabels(true);
+    SimpleSeriesRenderer r = renderer.getSeriesRendererAt(0);
+    r.setGradientEnabled(true);
+    r.setGradientStart(0, Color.BLUE);
+    r.setGradientStop(0, Color.GREEN);
+    r.setHighlighted(true);
+    Intent intent = ChartFactory.getPieChartIntent(context,
+        buildCategoryDataset("Project budget", values), renderer, "Budget");
     return intent;
   }
 
