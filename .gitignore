@@ -6,3 +6,4 @@
 *.ear
 build/
 *.iml
+bin/
